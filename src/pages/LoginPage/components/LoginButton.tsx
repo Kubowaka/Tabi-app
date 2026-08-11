@@ -19,7 +19,7 @@ const LoginButtonAreaStyle = css`
 const LoginButtonStyle = css`
   max-width: 100%;
   padding: 5px 80px;
-  margin-block: 10px;
+  margin-block: 16px;
   color: white;
   border-radius: 10px;
   background: linear-gradient(

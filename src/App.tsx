@@ -1,9 +1,11 @@
 // import { useState } from 'react'
-import { Login} from './pages/LoginPage/Login'
-import './App.css'
+import "./App.css";
+import { Login } from "./pages/LoginPage/Login";
+import { SpotList } from "./pages/Spot&FavListPage/SpotList";
 
 function App() {
-  return <Login />;
+  // return <Login />;
+  return <SpotList />;
 }
 
 export default App;
