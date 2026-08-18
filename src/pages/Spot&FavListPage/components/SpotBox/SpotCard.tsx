@@ -21,7 +21,11 @@ export const SpotCard = ({
   return (
     <article css={cardStyle}>
       <div css={imageArea}>
-       <img src={image}  css={imageStyle} />
+        {image ? (
+          <img src={image} css={imageStyle} />
+        ) : (
+          <div css={noImageStyle}>No image</div>
+        )}
 
         <button css={favoriteButton}>{favorite ? "⭐" : "☆"}</button>
       </div>
@@ -60,6 +64,17 @@ const imageStyle = css`
   width: 100%;
   height: 100%;
   object-fit: cover;
+`;
+
+const noImageStyle = css`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eeeeee;
+  color: #888888;
+  font-size: 14px;
 `;
 
 const favoriteButton = css`

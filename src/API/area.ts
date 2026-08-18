@@ -30,3 +30,16 @@ export const getCities = async (prefecture: string) => {
 
   return data;
 };
+
+// 市区町村から座標を取得
+export const getTowns = async (city: string) => {
+  const response = await fetch(
+    `https://geoapi.heartrails.com/api/json?method=getTowns&city=${encodeURIComponent(city)}`,
+  );
+
+  const data = await response.json();
+
+  console.log("getTownsの結果:", data);
+
+  return data;
+};

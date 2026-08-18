@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
-import { getPrefectures, getCities } from "../../../../API/area";
+import { getPrefectures, getCities, getTowns } from "../../../../API/area";
 
-export default function AleaSelect() {
+export default function AleaSelect({
+  onCoordinatesChange,
+}: {
+  onCoordinatesChange: (lat: number, lng: number) => void;
+}) {
   const [prefectures, setPrefectures] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
   const [selectedPrefecture, setSelectedPrefecture] = useState("");
@@ -73,6 +77,34 @@ export default function AleaSelect() {
     // 市区町村取得処理を実行
     fetchCitiesByPrefecture();
   }, [selectedPrefecture]);
+
+  // 市区町村が選択されたら座標を取得
+  useEffect(() => {
+    const fetchCoordinates = async () => {
+      // 市区町村がまだ選択されていなければ何もしない
+      if (!selectedCity) {
+        return;
+      }
+
+      try {
+        // 選択した市区町村をHeartRailsに渡す
+        const data = await getTowns(selectedCity);
+
+        // 取得したデータを確認
+        console.log("★ getTownsの結果 ★");
+        console.log(data);
+        const lat = data.response.location[0].y;
+        const lng = data.response.location[0].x;
+
+        //★SpotListに座標を渡す
+        onCoordinatesChange(lat, lng);
+      } catch (error) {
+        console.error("座標の取得に失敗しました:", error);
+      }
+    };
+
+    fetchCoordinates();
+  }, [selectedCity]);
 
   return (
     <div style={{ display: "flex", gap: "16px", padding: "16px" }}>
