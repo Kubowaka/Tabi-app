@@ -5,43 +5,49 @@ export const getPhotoUrl = (photoName: string) => {
 };
 
 export const searchPlaces = async (
-  /*データ投げてる？ 13~15*/
-  keyword: string,
+  placeType: string,
   lat: number,
   lng: number,
 ) => {
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchNearby",
     {
-      method: "POST" /*ここでデータ返されてる?*/,
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY,
         "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.photos,places.location",
+          "places.id,places.displayName,places.formattedAddress,places.photos,places.location,places.editorialSummary,places.types,places.primaryType",
       },
       body: JSON.stringify({
-        includedTypes: [keyword],
-        maxResultCount: 30 /*max*/,
+        includedTypes: [placeType],
+        maxResultCount: 20,
         locationRestriction: {
           circle: {
             center: {
               latitude: lat,
               longitude: lng,
             },
-            radius: 3000 /*半径*/,
+            radius: 3000,
           },
         },
       }),
     },
   );
 
-  return await response.json();
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Nearby Search API Error:", data);
+    throw new Error(`Places API Error: ${response.status}`);
+  }
+
+  return data;
 };
 
 export const searchPlacesText = async (
   query: string,
-  keyword: string,
+  placeType: string,
   lat: number,
   lng: number,
 ) => {
@@ -53,24 +59,28 @@ export const searchPlacesText = async (
         "Content-Type": "application/json",
         "X-Goog-Api-Key": API_KEY,
         "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.photos,places.location",
+          // "places.id,places.displayName,places.formattedAddress,places.photos,places.location",
+          "places.id,places.displayName,places.formattedAddress,places.photos,places.location,places.editorialSummary,places.types,places.primaryType",
       },
       body: JSON.stringify({
         textQuery: query,
-        ...(keyword && { includedType: keyword }),
-        pageSize: 30,
+
+        ...(placeType && {
+          includedType: placeType,
+        }),
+
+        pageSize: 20,
         languageCode: "ja",
 
-        // ★ここを変更
         locationRestriction: {
           rectangle: {
             low: {
-              latitude: Number(lat) - 0.027,
-              longitude: Number(lng) - 0.034,
+              latitude: lat - 0.027,
+              longitude: lng - 0.034,
             },
             high: {
-              latitude: Number(lat) + 0.027,
-              longitude: Number(lng) + 0.034,
+              latitude: lat + 0.027,
+              longitude: lng + 0.034,
             },
           },
         },
@@ -78,5 +88,12 @@ export const searchPlacesText = async (
     },
   );
 
-  return await response.json();
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Text Search API Error:", data);
+    throw new Error(`Places API Error: ${response.status}`);
+  }
+
+  return data;
 };

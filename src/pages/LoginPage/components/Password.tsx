@@ -1,14 +1,13 @@
 /*パスワード入力欄*/
 import { css } from "@emotion/react";
-export const Password = () => {
+export const Password = ({ password, setPassword }) => {
   return (
     <div css={PasswordStyle}>
       <label htmlFor="password">パスワード</label>
       <input
-        css={PasswordInputStyle}
-        id="password"
         type="password"
-        placeholder="パスワードを入力"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
       />
     </div>
   );

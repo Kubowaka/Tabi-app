@@ -3,20 +3,18 @@ import { css } from "@emotion/react";
 type SpotCardProps = {
   name: string;
   image: string;
-  area: string;
-  category: string;
   title: string;
   description: string;
   favorite?: boolean;
+  onFavoriteClick?: () => void;
 };
 
 export const SpotCard = ({
   image,
-  area,
-  category,
   title,
   description,
   favorite = false,
+  onFavoriteClick,
 }: SpotCardProps) => {
   return (
     <article css={cardStyle}>
@@ -27,22 +25,27 @@ export const SpotCard = ({
           <div css={noImageStyle}>No image</div>
         )}
 
-        <button css={favoriteButton}>{favorite ? "⭐" : "☆"}</button>
+        <button
+          css={favoriteButton}
+          onClick={onFavoriteClick}
+          type="button"
+        >
+          {favorite ? "⭐" : "☆"}
+        </button>
       </div>
 
       <div css={contentStyle}>
-        <div css={tagArea}>
-          <span css={areaTag}>📍 {area}</span>
-          <span css={categoryTag}>{category}</span>
-        </div>
-
         <h3 css={titleStyle}>{title}</h3>
 
-        <p css={descriptionStyle}>{description}</p>
+        <p css={descriptionStyle}>
+          {description}
+        </p>
       </div>
     </article>
   );
 };
+
+///CSS
 
 const cardStyle = css`
   width: 180px;
@@ -56,7 +59,7 @@ const cardStyle = css`
 `;
 
 const imageArea = css`
-  flex: 1;
+  height: 150px;
   position: relative;
 `;
 
@@ -98,28 +101,6 @@ const contentStyle = css`
   display: flex;
   flex-direction: column;
   padding: 12px;
-`;
-
-const tagArea = css`
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-`;
-
-const areaTag = css`
-  background: #dff6f7;
-  color: #2b7c8a;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-`;
-
-const categoryTag = css`
-  background: #e6f5dc;
-  color: #4f7d3a;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
 `;
 
 const titleStyle = css`

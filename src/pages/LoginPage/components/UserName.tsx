@@ -1,6 +1,6 @@
 /*ユーザーネーム入力欄*/
 import { css } from "@emotion/react";
-export const UserName = () => {
+export const UserName = ({ email, setEmail }) => {
   return (
     <div css={UserNameStyle}>
       <label htmlFor="username">ユーザー名</label>
@@ -9,6 +9,8 @@ export const UserName = () => {
         id="username"
         type="email"
         placeholder="your@email.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
       />
     </div>
   );

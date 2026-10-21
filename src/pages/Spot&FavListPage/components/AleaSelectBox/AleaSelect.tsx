@@ -1,3 +1,4 @@
+import { css } from "@emotion/react";
 import { useState, useEffect } from "react";
 import { getPrefectures, getCities, getTowns } from "../../../../API/area";
 
@@ -8,8 +9,13 @@ export default function AleaSelect({
 }) {
   const [prefectures, setPrefectures] = useState<any[]>([]);
   const [cities, setCities] = useState<any[]>([]);
-  const [selectedPrefecture, setSelectedPrefecture] = useState("");
-  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedPrefecture, setSelectedPrefecture] = useState(
+    localStorage.getItem("selectedPrefecture") || "",
+  );
+  const [selectedCity, setSelectedCity] = useState(
+    localStorage.getItem("selectedCity") || "",
+  );
+
   const [loading, setLoading] = useState(false);
 
   // 都道府県を取得
@@ -35,7 +41,6 @@ export default function AleaSelect({
   // 選択された都道府県に基づいて市区町村を取得
   useEffect(() => {
     const fetchCitiesByPrefecture = async () => {
-      // 都道府県がまだ選択されていない場合
       if (!selectedPrefecture) {
         setCities([]);
         return;
@@ -53,35 +58,22 @@ export default function AleaSelect({
         console.log("city:", cities.response?.city);
         console.log("location:", cities.response?.location);
 
-        // ★ locationの中身をcitiesに保存
         setCities(cities.response.location);
 
-        // 都道府県が変わったら、
-        // 以前選択していた市区町村をリセット
-        setSelectedCity("");
-
-        // 確認用
         console.log("市区町村データ:", cities.response.city);
-
-        // 都道府県が変わったら、
-        // 以前選択していた市区町村をリセット
-        setSelectedCity("");
       } catch (error) {
         console.error("市区町村の取得に失敗しました:", error);
       } finally {
-        // API通信終了
         setLoading(false);
       }
     };
 
-    // 市区町村取得処理を実行
     fetchCitiesByPrefecture();
   }, [selectedPrefecture]);
 
   // 市区町村が選択されたら座標を取得
   useEffect(() => {
     const fetchCoordinates = async () => {
-      // 市区町村がまだ選択されていなければ何もしない
       if (!selectedCity) {
         return;
       }
@@ -93,8 +85,8 @@ export default function AleaSelect({
         // 取得したデータを確認
         console.log("★ getTownsの結果 ★");
         console.log(data);
-        const lat = data.response.location[0].y;
-        const lng = data.response.location[0].x;
+        const lat = Number(data.response.location[0].y);
+        const lng = Number(data.response.location[0].x);
 
         //★SpotListに座標を渡す
         onCoordinatesChange(lat, lng);
@@ -107,27 +99,21 @@ export default function AleaSelect({
   }, [selectedCity]);
 
   return (
-    <div style={{ display: "flex", gap: "16px", padding: "16px" }}>
+    <div css={containerStyle}>
       {/* 県ドロップダウン */}
-      <div style={{ flex: 1 }}>
+      <div css={fieldStyle}>
         <select
           value={selectedPrefecture}
-          onChange={(e) => setSelectedPrefecture(e.target.value)}
-          disabled={loading}
-          style={{
-            width: "100%",
-            padding: "12px",
-            fontSize: "16px",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            appearance: "none",
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 12px center",
-            paddingRight: "36px",
-            cursor: loading ? "not-allowed" : "pointer",
-            opacity: loading ? 0.5 : 1,
+          onChange={(e) => {
+            const prefecture = e.target.value;
+            setSelectedPrefecture(prefecture);
+            localStorage.setItem("selectedPrefecture", prefecture);
+
+            setSelectedCity("");
+            localStorage.removeItem("selectedCity");
           }}
+          disabled={loading}
+          css={[selectStyle, loading && disabledStyle]}
         >
           <option value="">県</option>
           {prefectures.map((pref: any) => (
@@ -139,25 +125,16 @@ export default function AleaSelect({
       </div>
 
       {/* 市区町村ドロップダウン */}
-      <div style={{ flex: 1 }}>
+      <div css={fieldStyle}>
         <select
           value={selectedCity}
-          onChange={(e) => setSelectedCity(e.target.value)}
-          disabled={!selectedPrefecture || loading}
-          style={{
-            width: "100%",
-            padding: "12px",
-            fontSize: "16px",
-            border: "1px solid #ddd",
-            borderRadius: "8px",
-            appearance: "none",
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "right 12px center",
-            paddingRight: "36px",
-            cursor: selectedPrefecture && !loading ? "pointer" : "not-allowed",
-            opacity: selectedPrefecture && !loading ? 1 : 0.5,
+          onChange={(e) => {
+            const city = e.target.value;
+            setSelectedCity(city);
+            localStorage.setItem("selectedCity", city);
           }}
+          disabled={!selectedPrefecture || loading}
+          css={[selectStyle, (!selectedPrefecture || loading) && disabledStyle]}
         >
           <option value="">市区町村</option>
           {cities?.map((city) => (
@@ -170,3 +147,35 @@ export default function AleaSelect({
     </div>
   );
 }
+
+/////css/////
+
+const containerStyle = css({
+  display: "flex",
+  gap: "16px",
+  padding: "16px",
+});
+
+const fieldStyle = css({
+  flex: 1,
+});
+
+const selectStyle = css({
+  width: "100%",
+  padding: "12px",
+  fontSize: "16px",
+  border: "1px solid #ddd",
+  borderRadius: "8px",
+  appearance: "none",
+  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 12px center",
+  paddingRight: "36px",
+  cursor: "pointer",
+  opacity: 1,
+});
+
+const disabledStyle = css({
+  cursor: "not-allowed",
+  opacity: 0.5,
+});

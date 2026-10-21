@@ -1,22 +1,56 @@
+import { css } from "@emotion/react";
 import { UserName } from "./components/UserName";
 import { Password } from "./components/Password";
 import { RememberMe } from "./components/Remenber";
 import { LoginButton } from "./components/LoginButton";
-import { css } from "@emotion/react";
+import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./../../firebase";
+import { useNavigate } from "react-router-dom";
 
 export const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setError("");
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+
+      console.log("ログイン成功", userCredential.user);
+      navigate("/spot-list");
+    } catch (error) {
+      console.error("ログイン失敗", error);
+      setError("メールアドレスまたはパスワードが正しくありません");
+    }
+  };
+
   return (
     <div css={LoginStyle}>
-      <h1 css={LoginTitleStyle}>ログイン</h1>
+      <form onSubmit={handleSubmit}>
+        <h1 css={LoginTitleStyle}>ログイン</h1>
 
-      <UserName />
-      <Password />
-      <RememberMe />
-      <LoginButton />
+        <UserName email={email} setEmail={setEmail} />
 
-      <a css={ForgotPasswordStyle} href="/forgot-password">
-        パスワードを忘れた方はこちら
-      </a>
+        <Password password={password} setPassword={setPassword} />
+        {error && <p>{error}</p>}
+        <RememberMe />
+
+        <LoginButton />
+
+        <a css={ForgotPasswordStyle} href="/forgot-password">
+          パスワードを忘れた方はこちら
+        </a>
+      </form>
     </div>
   );
 };
