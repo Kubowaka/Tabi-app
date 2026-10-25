@@ -11,6 +11,8 @@ import { MainLayout } from "./layouts/MainLayout";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 
+import { SharedPlan } from "./pages/SharedPlanPages/SharedPlan";
+
 function App() {
   return (
     <Routes>
@@ -43,6 +45,9 @@ function App() {
         {/* 予定追加 */}
         <Route path="/add-plan-schedule" element={<AddPlanSchedule />} />
       </Route>
+
+      {/* 共有されたしおり（ログイン不要） */}
+      <Route path="/shared/:token" element={<SharedPlan />} />
     </Routes>
   );
 }

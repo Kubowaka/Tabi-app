@@ -7,7 +7,7 @@ import { AddPlanbutton } from "./components/AddPlanbutton";
 import { PlanBox } from "./components/PlanBox";
 import CreateScheduleModal from "../AddPlanSchedulePage/components/CreateScheduleModal";
 import { createPlan, getPlans, deletePlan } from "../../services/planService";
-
+import { createPlanShare } from "../../services/planService";
 
 export const PlanList = () => {
   const navigate = useNavigate();
@@ -88,6 +88,35 @@ export const PlanList = () => {
 
             {openMenuId === plan.id && (
               <div css={menuStyle}>
+                {/* 共有 */}
+                <button
+                  css={menuItemStyle}
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const token = await createPlanShare(plan.id);
+                      const shareUrl = `${window.location.origin}/shared/${token}`;
+
+                      await navigator.clipboard.writeText(shareUrl);
+
+                      alert(
+                        "共有リンクをコピーしました！\n" +
+                          "LINEなどで相手に送ってね。",
+                      );
+
+                      setOpenMenuId(null);
+                    } catch (error) {
+                      console.error("共有リンクの発行に失敗しました:", error);
+                      alert(
+                        "共有リンクを発行できませんでした。Consoleのエラーを確認してください。",
+                      );
+                    }
+                  }}
+                >
+                  共有
+                </button>
+
+                {/* 削除 */}
                 <button
                   css={menuItemStyle}
                   type="button"
