@@ -16,18 +16,7 @@ export const getCities = async (prefecture: string) => {
   );
 
   const data = await response.json();
-
-  console.log("getCitiesの結果", data);
-
-  console.log("prefecture:", prefecture);
-  console.log(
-    "API URL:",
-    `https://geoapi.heartrails.com/api/json?method=getCities&prefecture=${encodeURIComponent(prefecture)}`,
-  );
-  console.log("response:", data.response);
-  console.log("city:", data.response?.city);
-  console.log("location:", data.response?.location);
-
+  
   return data;
 };
 
@@ -38,8 +27,6 @@ export const getTowns = async (city: string) => {
   );
 
   const data = await response.json();
-
-  console.log("getTownsの結果:", data);
 
   return data;
 };

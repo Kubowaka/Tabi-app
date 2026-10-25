@@ -32,9 +32,7 @@ export const Header = () => {
 
   return (
     <header css={headerStyle}>
-      <h1 css={titleStyle}>
-        {title}
-      </h1>
+      <h1 css={titleStyle}>{title}</h1>
     </header>
   );
 };
@@ -43,15 +41,42 @@ export const Header = () => {
    ヘッダー
 ======================================== */
 
+// const headerStyle = css`
+//   position: fixed;
+//   top: 0;
+//   z-index: 100;
+
+//   width: 100%;
+//   height: 54px;
+//   box-sizing: border-box;
+//   flex-shrink: 0;
+
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+
+//   background-color: #9dd8e3;
+// `;
+
 const headerStyle = css`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
   width: 100%;
   height: 54px;
-
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-
   background-color: #9dd8e3;
+
+  /* PC版だけ左メニューの右側から表示 */
+  @media (min-width: 1024px) {
+    left: 90px;
+    width: calc(100% - 90px);
+  }
 `;
 
 const titleStyle = css`

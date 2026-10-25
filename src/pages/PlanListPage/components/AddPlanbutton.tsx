@@ -6,33 +6,34 @@ type AddPlanbuttonProps = {
 
 export const AddPlanbutton = ({ onClick }: AddPlanbuttonProps) => {
   return (
-    <button css={buttonStyle} onClick={onClick} type="button">
-      ＋ 新しいしおりを作成
-    </button>
+    <div css={containerStyle}>
+      <button css={buttonStyle} onClick={onClick} type="button">
+        ＋ 新しいしおりを作成
+      </button>
+    </div>
   );
 };
 
-/* =========================
-   ボタン
-========================= */
+const containerStyle = css`
+  position: sticky;
+  top: 54px;
+  z-index: 99;
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+  background-color: #ffffff;
+`;
 
 const buttonStyle = css`
   display: block;
-
-  margin: 0 auto 16px;
-
+  margin: 0;
   padding: 9px 20px;
-
   border: none;
   border-radius: 30px;
-
   background-color: #ffbf00;
-
   color: #ffffff;
-
   font-size: 14px;
   font-weight: bold;
-
   cursor: pointer;
 
   &:hover {

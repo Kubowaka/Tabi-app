@@ -19,6 +19,16 @@ const CreateScheduleModal = ({ onClose, onSave }: CreateScheduleModalProps) => {
       return;
     }
 
+    if (!startDate || !endDate) {
+      alert("始まりと終わりの日付を入力してください");
+      return;
+    }
+
+    if (endDate < startDate) {
+      alert("終わりの日は、始まりの日以降の日付を選択してください");
+      return;
+    }
+
     onSave(title, startDate, endDate);
   };
 

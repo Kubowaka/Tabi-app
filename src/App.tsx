@@ -5,15 +5,18 @@ import { SpotList } from "./pages/Spot&FavListPage/SpotList";
 import { FavList } from "./pages/Spot&FavListPage/FavList";
 import { PlanList } from "./pages/PlanListPage/PlanList";
 import { PlanMake } from "./pages/PlanMakePage/PlanMake";
-import { AddPlanSchedule } from "./pages/AddPlanSchedulePage/AddPlanSchedule"; 
+import { AddPlanSchedule } from "./pages/AddPlanSchedulePage/AddPlanSchedule";
 import { MainLayout } from "./layouts/MainLayout";
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
+      {/* 最初に開いたらログインページへ */}
+      <Route path="/" element={<Navigate to="/Login" replace />} />
+
       {/* ログイン */}
       <Route path="/Login" element={<Login />} />
 

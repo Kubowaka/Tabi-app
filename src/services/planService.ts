@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   updateDoc,
@@ -155,5 +156,57 @@ export const updateSchedule = async (
     startTime: startTime,
     endTime: endTime,
     memo: memo,
+  });
+};
+
+// 旅行タイトルを更新する
+export const updatePlanTitle = async (planId: string, title: string) => {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("ログインしていません");
+  }
+
+  const planRef = doc(db, "plans", planId);
+  const planSnapshot = await getDoc(planRef);
+
+  if (!planSnapshot.exists()) {
+    throw new Error("旅行プランが見つかりません");
+  }
+
+  if (planSnapshot.data().userId !== user.uid) {
+    throw new Error("この旅行プランを編集する権限がありません");
+  }
+
+  await updateDoc(planRef, {
+    title: title.trim(),
+  });
+};
+
+export const updatePlanDates = async (
+  planId: string,
+  startDate: string,
+  endDate: string,
+) => {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("ログインしていません");
+  }
+
+  const planRef = doc(db, "plans", planId);
+  const planSnapshot = await getDoc(planRef);
+
+  if (!planSnapshot.exists()) {
+    throw new Error("旅行プランが見つかりません");
+  }
+
+  if (planSnapshot.data().userId !== user.uid) {
+    throw new Error("この旅行プランを編集する権限がありません");
+  }
+
+  await updateDoc(planRef, {
+    startDate,
+    endDate,
   });
 };

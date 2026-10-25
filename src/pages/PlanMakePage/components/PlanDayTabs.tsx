@@ -17,7 +17,7 @@ export const PlanDayTabs = ({
         <button
           key={date}
           type="button"
-          css={selectedDate === date ? activeButtonStyle : buttonStyle}
+          css={[buttonStyle, selectedDate === date && activeButtonStyle]}
           onClick={() => onDateChange(date)}
         >
           {date}
@@ -27,17 +27,29 @@ export const PlanDayTabs = ({
   );
 };
 
-
+// CSS
 const listStyle = css`
   display: flex;
   justify-content: center;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   margin-top: 20px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  box-sizing: border-box;
   overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const buttonStyle = css`
-  min-width: 70px;
+  flex: 0 0 auto;
+  min-width: 0;
   padding: 8px 12px;
   border: 1px solid #91d9e6;
   border-radius: 20px;
@@ -50,14 +62,6 @@ const buttonStyle = css`
 `;
 
 const activeButtonStyle = css`
-  min-width: 70px;
-  padding: 8px 12px;
-  border: 1px solid #91d9e6;
-  border-radius: 20px;
   background-color: #91d9e6;
   color: #ffffff;
-  font-size: 13px;
-  font-weight: bold;
-  white-space: nowrap;
-  cursor: pointer;
 `;

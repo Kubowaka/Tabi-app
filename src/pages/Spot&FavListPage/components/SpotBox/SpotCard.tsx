@@ -25,11 +25,7 @@ export const SpotCard = ({
           <div css={noImageStyle}>No image</div>
         )}
 
-        <button
-          css={favoriteButton}
-          onClick={onFavoriteClick}
-          type="button"
-        >
+        <button css={favoriteButton} onClick={onFavoriteClick} type="button">
           {favorite ? "⭐" : "☆"}
         </button>
       </div>
@@ -37,9 +33,7 @@ export const SpotCard = ({
       <div css={contentStyle}>
         <h3 css={titleStyle}>{title}</h3>
 
-        <p css={descriptionStyle}>
-          {description}
-        </p>
+        <p css={descriptionStyle}>{description}</p>
       </div>
     </article>
   );
@@ -56,6 +50,13 @@ const cardStyle = css`
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* アイパッド＆PC版カードを広げる */
+  @media (min-width: 768px) {
+    width: 90%;
+    height: 280px;
+    border-radius: 16px;
+  }
 `;
 
 const imageArea = css`

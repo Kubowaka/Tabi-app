@@ -7,26 +7,48 @@ import { createSchedule, updateSchedule } from "../../services/planService";
 import { ScheduleForm } from "./components/ScheduleForm";
 import { ProceedButtonBox } from "./components/ProceedButtonBox";
 
+type LocationState = {
+  planId?: string;
+  scheduleId?: string;
+  favorite?: {
+    name?: string;
+  };
+  planTitle?: string;
+  title?: string;
+  startDate?: string;
+  endDate?: string;
+  day?: string;
+  startTime?: string;
+  endTime?: string;
+  memo?: string;
+  from?: string;
+};
 
 export const AddPlanSchedule = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const planId = location.state?.planId;
-  const scheduleId = location.state?.scheduleId;
-  const favorite = location.state?.favorite;
-  const planTitle = location.state?.planTitle || "";
+  // 画面遷移時に渡された情報
+  const state = location.state as LocationState | null;
 
-  ///しおり入力///
-  const [day, setDay] = useState(location.state?.day || "");
+  const planId = state?.planId;
+  const scheduleId = state?.scheduleId;
+  const favorite = state?.favorite;
+
+  const planTitle = state?.planTitle || state?.title || "";
+  const startDate = state?.startDate || "";
+  const endDate = state?.endDate || "";
+
+  // 予定入力欄
+  const [day, setDay] = useState(state?.day || "");
   const [title, setTitle] = useState(
-    location.state?.title || location.state?.favorite?.name || "",
+    state?.favorite?.name || state?.title || "",
   );
-  const [startTime, setStartTime] = useState(location.state?.startTime || "");
-  const [endTime, setEndTime] = useState(location.state?.endTime || "");
-  const [memo, setMemo] = useState(location.state?.memo || "");
+  const [startTime, setStartTime] = useState(state?.startTime || "");
+  const [endTime, setEndTime] = useState(state?.endTime || "");
+  const [memo, setMemo] = useState(state?.memo || "");
 
-  /// 保存処理時 ///
+  // 保存処理
   const handleSave = async () => {
     if (!planId) {
       alert("しおり情報が見つかりません");
@@ -35,75 +57,76 @@ export const AddPlanSchedule = () => {
 
     try {
       if (scheduleId) {
-        // 再編集の場合
+        // 既存の予定を更新
         await updateSchedule(scheduleId, day, title, startTime, endTime, memo);
       } else {
-        // 新規追加の場合
+        // 新しい予定をFirebaseに保存
         await createSchedule(planId, day, title, startTime, endTime, memo);
       }
 
+      // しおり画面へ戻る
       navigate("/plan-make", {
         state: {
-          planId: planId,
+          planId,
           title: planTitle,
-          startDate: location.state?.startDate || "",
-          endDate: location.state?.endDate || "",
+          startDate,
+          endDate,
         },
-      }); 
+      });
     } catch (error) {
       console.error("予定の保存に失敗しました:", error);
       alert("予定の保存に失敗しました");
     }
   };
 
-  /// キャンセル処理 ///
+  // キャンセル処理
   const handleCancel = () => {
     navigate("/plan-make", {
       state: {
-        planId: planId,
+        planId,
         title: planTitle,
-        startDate: location.state?.startDate || "",
-        endDate: location.state?.endDate || "",
+        startDate,
+        endDate,
       },
     });
   };
 
-  /// お気に入りからの追加処理 ///
+  // お気に入り一覧へ移動
   const handleAddFavorite = () => {
     navigate("/Favlist", {
       state: {
         from: "add-plan-schedule",
-        planId: planId,
-        day: day,
-        startTime: startTime,
-        endTime: endTime,
-        memo: memo,
+        planId,
+        planTitle,
+        startDate,
+        endDate,
+        day,
+        title,
+        startTime,
+        endTime,
+        memo,
       },
     });
   };
 
   return (
     <div css={pageStyle}>
-      {/* 予定追加のキャンセル */}
       <button css={closeButtonStyle} onClick={handleCancel} type="button">
         ✕
       </button>
 
       <h2 css={titleStyle}>{scheduleId ? "予定を再編集" : "予定を追加"}</h2>
 
-      {/*お気に入り選択時のタイトル表示*/}
       {favorite && <p>選択したスポット：{favorite.name}</p>}
 
       <ScheduleForm
         day={day}
-        startDate={location.state?.startDate || ""}
-        endDate={location.state?.endDate || ""}
+        startDate={startDate}
+        endDate={endDate}
         title={title}
         startTime={startTime}
         endTime={endTime}
         memo={memo}
-
-        // 変更後 //
         onDayChange={setDay}
         onTitleChange={setTitle}
         onStartTimeChange={setStartTime}

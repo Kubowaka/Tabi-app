@@ -14,20 +14,16 @@ export const Login = () => {
   const navigate = useNavigate();
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     setError("");
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
+      await signInWithEmailAndPassword(auth, email, password);
 
-      console.log("ログイン成功", userCredential.user);
       navigate("/spot-list");
+      
     } catch (error) {
       console.error("ログイン失敗", error);
       setError("メールアドレスまたはパスワードが正しくありません");
