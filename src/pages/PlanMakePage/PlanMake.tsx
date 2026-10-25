@@ -238,16 +238,18 @@ export const PlanMake = () => {
         onDateChange={setSelectedDate}
       />
 
-      <PlanListBasesheet
-        schedules={filteredSchedules}
-        startDate={startDate}
-        openMenuId={openMenuId}
-        onMenuToggle={(scheduleId) => {
-          setOpenMenuId(openMenuId === scheduleId ? null : scheduleId);
-        }}
-        onEdit={handleEditSchedule}
-        onDelete={handleDeleteSchedule}
-      />
+      <div css={scheduleAreaStyle}>
+        <PlanListBasesheet
+          schedules={filteredSchedules}
+          startDate={startDate}
+          openMenuId={openMenuId}
+          onMenuToggle={(scheduleId) => {
+            setOpenMenuId(openMenuId === scheduleId ? null : scheduleId);
+          }}
+          onEdit={handleEditSchedule}
+          onDelete={handleDeleteSchedule}
+        />
+      </div>
 
       <div css={buttonAreaStyle}>
         <button
@@ -267,26 +269,35 @@ export const PlanMake = () => {
 };
 
 const pageStyle = css`
-  position: relative;
-  min-height: calc(100vh - 124px);
-  margin: 10px 14px 20px;
-  padding: 16px 12px 100px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 124px);
+  min-height: 0;
+  margin: 10px 14px 0;
+  padding: 16px 12px 0;
   box-sizing: border-box;
   background-color: #ffffff;
   border: 1px solid #9dd8e3;
   border-radius: 6px;
+  overflow: hidden;
 `;
+
+const scheduleAreaStyle = css`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 12px;
+`;
+
 const buttonAreaStyle = css`
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 10px;
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 12px 12px;
+  padding: 10px 12px;
   box-sizing: border-box;
-  pointer-events: none;
+  background-color: #ffffff;
 `;
 
 const plusButtonStyle = css`

@@ -108,6 +108,7 @@ export const FavList = () => {
                 {isAddingToSchedule && (
                   <button
                     type="button"
+                    css={addToScheduleButtonStyle}
                     onClick={() => {
                       navigate("/add-plan-schedule", {
                         state: {
@@ -126,7 +127,7 @@ export const FavList = () => {
                       });
                     }}
                   >
-                    このスポットを予定に追加
+                    予定に追加
                   </button>
                 )}
               </div>
@@ -175,10 +176,14 @@ const listAreaStyle = css`
 const cardWrapperStyle = css`
   width: 100%;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 
   & > * {
     width: 100%;
     min-width: 0;
+    box-sizing: border-box;
   }
 `;
 
@@ -206,4 +211,44 @@ const emptyStyle = css`
 
   color: #999999;
   font-size: 14px;
+`;
+
+const addToScheduleButtonStyle = css`
+  display: block;
+  width: calc(100% - 30px);
+  margin: 8px auto;
+  padding: 10px 8px;
+
+  border: 1px solid #f6c5d2;
+  border-radius: 20px;
+
+  background: linear-gradient(135deg, #fff0f4 0%, #ffe0e9 100%);
+  color: #b85d78;
+
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+
+  box-shadow: 0 3px 8px rgba(219, 139, 164, 0.18);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #ffe5ed 0%, #ffd3e0 100%);
+    box-shadow: 0 5px 12px rgba(219, 139, 164, 0.28);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 5px rgba(219, 139, 164, 0.18);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #e89bb3;
+    outline-offset: 3px;
+  }
 `;
