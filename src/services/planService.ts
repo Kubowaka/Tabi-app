@@ -25,6 +25,13 @@ type Schedule = {
   memo: string;
 };
 
+export type Plan = {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+};
+
 /**
  * 共有中の旅行プランを最新データに同期する
  */
@@ -109,7 +116,7 @@ export const createPlan = async (
   return planRef.id;
 };
 
-export const getPlans = async () => {
+export const getPlans = async (): Promise<Plan[]> => {
   const user = auth.currentUser;
 
   if (!user) {
@@ -117,14 +124,19 @@ export const getPlans = async () => {
   }
 
   const q = query(collection(db, "plans"), where("userId", "==", user.uid));
-  //collectionはPlansという箱的な、Firestorの中のPlans見てね。からのuserIDが一致する部分だけを取り出し。
 
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  return snapshot.docs.map((doc) => {
+    const data = doc.data();
+
+    return {
+      id: doc.id,
+      title: data.title ?? "",
+      startDate: data.startDate ?? "",
+      endDate: data.endDate ?? "",
+    };
+  });
 };
 
 export const getSchedules = async (planId: string) => {
@@ -255,34 +267,11 @@ export const updateSchedule = async (
   await syncActivePlanShares(scheduleData.planId, user.uid);
 };
 
-// 旅行タイトルを更新する
-export const updatePlanTitle = async (planId: string, title: string) => {
-  const user = auth.currentUser;
-
-  if (!user) {
-    throw new Error("ログインしていません");
-  }
-
-  const planRef = doc(db, "plans", planId);
-  const planSnapshot = await getDoc(planRef);
-
-  if (!planSnapshot.exists()) {
-    throw new Error("旅行プランが見つかりません");
-  }
-
-  if (planSnapshot.data().userId !== user.uid) {
-    throw new Error("この旅行プランを編集する権限がありません");
-  }
-
-  await updateDoc(planRef, {
-    title: title.trim(),
-  });
-
-  await syncActivePlanShares(planId, user.uid);
-};
-
-export const updatePlanDates = async (
+// タイトル・開始日・終了日をまとめて更新
+// タイトル・開始日・終了日をまとめて更新
+export const updatePlanDetails = async (
   planId: string,
+  title: string,
   startDate: string,
   endDate: string,
 ) => {
@@ -299,15 +288,21 @@ export const updatePlanDates = async (
     throw new Error("旅行プランが見つかりません");
   }
 
-  if (planSnapshot.data().userId !== user.uid) {
+  const planData = planSnapshot.data();
+
+  if (planData.userId !== user.uid) {
     throw new Error("この旅行プランを編集する権限がありません");
   }
 
+  // タイトル・開始日・終了日を1回の updateDoc で更新
   await updateDoc(planRef, {
+    title,
     startDate,
     endDate,
+    updatedAt: serverTimestamp(),
   });
 
+  // 有効な共有データも同期
   await syncActivePlanShares(planId, user.uid);
 };
 

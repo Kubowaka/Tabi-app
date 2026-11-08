@@ -1,3 +1,5 @@
+// しおりの日付機関の自動計算と表記(すべて/1日....)
+
 import { css } from "@emotion/react";
 
 type PlanDayTabsProps = {

@@ -6,6 +6,12 @@ export const Header = () => {
 
   const getTitle = () => {
     switch (location.pathname) {
+      case "/Login":
+        return "ログイン";
+
+      case "/create-account":
+        return "新規会員登録";
+
       case "/spot-list":
         return "観光地リスト";
 
@@ -40,23 +46,6 @@ export const Header = () => {
 /* ========================================
    ヘッダー
 ======================================== */
-
-// const headerStyle = css`
-//   position: fixed;
-//   top: 0;
-//   z-index: 100;
-
-//   width: 100%;
-//   height: 54px;
-//   box-sizing: border-box;
-//   flex-shrink: 0;
-
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-
-//   background-color: #9dd8e3;
-// `;
 
 const headerStyle = css`
   position: fixed;

@@ -1,16 +1,20 @@
+// しおりの日付入力
+
 import { css } from "@emotion/react";
 import { useEffect, useState } from "react";
 
 type PlanDateProps = {
   startDate: string;
   endDate: string;
-  onSave: (startDate: string, endDate: string) => Promise<void>;
+  title: string;
+  onSave: (title: string, startDate: string, endDate: string) => Promise<void>;
   saving?: boolean;
 };
 
 export const PlanDate = ({
   startDate,
   endDate,
+  title,
   onSave,
   saving = false,
 }: PlanDateProps) => {
@@ -35,7 +39,7 @@ export const PlanDate = ({
     }
 
     try {
-      await onSave(editStartDate, editEndDate);
+      await onSave(title, editStartDate, editEndDate);
       setIsEditing(false);
     } catch {
       // 保存に失敗した場合は編集画面を開いたままにする

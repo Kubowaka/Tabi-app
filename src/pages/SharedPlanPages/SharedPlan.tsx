@@ -2,8 +2,8 @@ import { css } from "@emotion/react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getPlanShareByToken } from "../../services/planService";
-import { PlanDayTabs } from "../PlanMakePage/components/PlanDayTabs";
-import { PlanSchedule } from "../PlanMakePage/components/PlanSchedule";
+import { PlanDayTabs } from "../PlanPage/components/PlanDayTabs";
+import { PlanSchedule } from "../PlanPage/components/PlanSchedule";
 
 type SharedSchedule = {
   id: string;

@@ -24,7 +24,7 @@ type LocationState = {
   from?: string;
 };
 
-export const AddPlanSchedule = () => {
+export const CreateSchedule = () => {
   const navigate = useNavigate();
   const location = useLocation();
 

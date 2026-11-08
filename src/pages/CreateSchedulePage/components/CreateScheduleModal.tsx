@@ -16,7 +16,7 @@ const CreateScheduleModal = ({ onClose, onSave }: CreateScheduleModalProps) => {
   const handleSave = () => {
     if (!title.trim()) {
       alert("タイトルを入力してください");
-      return;
+      return; 
     }
 
     if (!startDate || !endDate) {

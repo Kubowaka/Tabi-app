@@ -17,7 +17,7 @@ export const PlanBox = ({
   return (
     <div css={planBoxStyle} onClick={onClick}>
       {/* アイコン */}
-      <div css={iconStyle}>🏖️</div>
+      <div css={iconStyle}>✈</div>
 
       {/* しおり情報 */}
       <div css={infoStyle}>

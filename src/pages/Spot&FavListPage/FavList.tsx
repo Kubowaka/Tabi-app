@@ -18,8 +18,10 @@ const typeName: Record<string, string> = {
 export const FavList = () => {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [favoriteSpots, setFavoriteSpots] = useState<any[]>([]);
   const isAddingToSchedule = location.state?.from === "add-plan-schedule";
+
   const [selectedPrefecture, setSelectedPrefecture] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
 
@@ -43,6 +45,7 @@ export const FavList = () => {
   // ========================================
   // お気に入り解除
   // ========================================
+
   const removeFavorite = async (favorite: any) => {
     try {
       await deleteFavorite(favorite.id);
@@ -58,20 +61,41 @@ export const FavList = () => {
     }
   };
 
-  // 選択された都道府県・市区町村でお気に入りを絞り込む
+  // ========================================
+  // 予定に追加
+  // ========================================
+
+  const handleAddToSchedule = (spot: any) => {
+    navigate("/add-plan-schedule", {
+      state: {
+        planId: location.state?.planId,
+        planTitle: location.state?.planTitle,
+        startDate: location.state?.startDate || "",
+        endDate: location.state?.endDate || "",
+        scheduleId: location.state?.scheduleId,
+        favorite: spot,
+        title: spot.name ?? "",
+        day: location.state?.day || "",
+        startTime: location.state?.startTime || "",
+        endTime: location.state?.endTime || "",
+        memo: location.state?.memo || "",
+      },
+    });
+  };
+
+  // ========================================
+  // お気に入りの絞り込み
+  // ========================================
+
   const filteredFavorites = favoriteSpots.filter((spot: any) => {
     const address = spot.address ?? spot.formattedAddress ?? "";
 
-    // 県が未選択なら、すべて表示
     if (!selectedPrefecture) return true;
 
-    // 住所に選択した都道府県が含まれているか確認
     if (!address.includes(selectedPrefecture)) return false;
 
-    // 市区町村が未選択なら、県だけで絞り込む
     if (!selectedCity) return true;
 
-    // 住所に選択した市区町村が含まれているか確認
     return address.includes(selectedCity);
   });
 
@@ -109,23 +133,7 @@ export const FavList = () => {
                   <button
                     type="button"
                     css={addToScheduleButtonStyle}
-                    onClick={() => {
-                      navigate("/add-plan-schedule", {
-                        state: {
-                          planId: location.state?.planId,
-                          planTitle: location.state?.planTitle,
-                          startDate: location.state?.startDate || "",
-                          endDate: location.state?.endDate || "",
-                          scheduleId: location.state?.scheduleId,
-                          favorite: spot,
-                          title: spot.name ?? "",
-                          day: location.state?.day || "",
-                          startTime: location.state?.startTime || "",
-                          endTime: location.state?.endTime || "",
-                          memo: location.state?.memo || "",
-                        },
-                      });
-                    }}
+                    onClick={() => handleAddToSchedule(spot)}
                   >
                     予定に追加
                   </button>
@@ -206,9 +214,7 @@ const gridStyle = css`
 
 const emptyStyle = css`
   margin: 50px 0;
-
   text-align: center;
-
   color: #999999;
   font-size: 14px;
 `;

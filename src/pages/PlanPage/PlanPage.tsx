@@ -8,8 +8,7 @@ import { PlanListBasesheet } from "./components/PlanListBasesheet";
 import {
   getSchedules,
   deleteSchedule,
-  updatePlanTitle,
-  updatePlanDates,
+  updatePlanDetails,
 } from "../../services/planService";
 
 type Schedule = {
@@ -21,13 +20,14 @@ type Schedule = {
   memo: string;
 };
 
-export const PlanMake = () => {
+export const PlanPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const initialTitle = location.state?.title || "入力欄";
-  const startDate = location.state?.startDate || "";
-  const endDate = location.state?.endDate || "";
+  const [startDate, setStartDate] = useState(location.state?.startDate || "");
+
+  const [endDate, setEndDate] = useState(location.state?.endDate || "");
   const planId = location.state?.planId;
 
   const [title, setTitle] = useState(initialTitle);
@@ -41,79 +41,63 @@ export const PlanMake = () => {
     setTitle(initialTitle);
   }, [initialTitle]);
 
-  // 旅行タイトルを保存
-  const handleTitleSave = async (newTitle: string) => {
+  //★新規旅行タイトル&日付を保存
+  const handlePlanDetailsSave = async (
+    newTitle: string,
+    newStartDate: string,
+    newEndDate: string,
+  ) => {
     const trimmedTitle = newTitle.trim();
 
     if (!trimmedTitle) {
       alert("旅行タイトルを入力してください");
-      return;
+      throw new Error("旅行タイトルが空です");
     }
 
-    if (!planId) {
-      alert("旅行プランの情報が見つかりません。一覧から開き直してください。");
-      return;
-    }
-
-    try {
-      setSavingTitle(true);
-      await updatePlanTitle(planId, trimmedTitle);
-
-      setTitle(trimmedTitle);
-
-      // 一覧に戻ったときに新しいタイトルを渡す
-      navigate(location.pathname, {
-        replace: true,
-        state: {
-          ...location.state,
-          title: trimmedTitle,
-          startDate,
-          endDate,
-          planId,
-        },
-      });
-    } catch (error) {
-      console.error("旅行タイトルの保存に失敗しました:", error);
-      alert("旅行タイトルを保存できませんでした。もう一度お試しください。");
-      throw error;
-    } finally {
-      setSavingTitle(false);
-    }
-  };
-
-  // 旅行日付を保存
-  const handleDatesSave = async (newStartDate: string, newEndDate: string) => {
     if (!planId) {
       alert("旅行プランの情報が見つかりません。一覧から開き直してください。");
       throw new Error("planIdがありません");
     }
 
+    if (!newStartDate || !newEndDate) {
+      alert("始まりと終わりの日付を入力してください");
+      throw new Error("日付が未入力です");
+    }
+
     if (newEndDate < newStartDate) {
       alert("終わりの日は、始まりの日以降にしてください");
-      throw new Error("日付の順番が正しくありません");
+      throw new Error("日付の順序が不正です");
     }
 
     try {
+      setSavingTitle(true);
       setSavingDates(true);
 
-      await updatePlanDates(planId, newStartDate, newEndDate);
+      // タイトル・開始日・終了日を1回の updateDoc で保存
+      await updatePlanDetails(planId, trimmedTitle, newStartDate, newEndDate);
 
-      // 画面上の日付と、次の画面へ渡す日付を更新
+      setTitle(trimmedTitle);
+      setStartDate(newStartDate);
+      setEndDate(newEndDate);
+
       navigate(location.pathname, {
         replace: true,
         state: {
           ...location.state,
-          title,
+          title: trimmedTitle,
           startDate: newStartDate,
           endDate: newEndDate,
           planId,
         },
       });
+
+      alert("旅行プランを保存しました");
     } catch (error) {
-      console.error("旅行日付の保存に失敗しました:", error);
-      alert("旅行日付を保存できませんでした。もう一度お試しください。");
+      console.error("旅行プランの保存に失敗しました:", error);
+      alert("旅行プランを保存できませんでした。もう一度お試しください。");
       throw error;
     } finally {
+      setSavingTitle(false);
       setSavingDates(false);
     }
   };
@@ -223,14 +207,26 @@ export const PlanMake = () => {
 
   return (
     <div css={pageStyle}>
-      <PlanTitle title={title} onSave={handleTitleSave} saving={savingTitle} />
+      {/* 旅行タイトル・日付の一括編集 */}
+      <div css={planDetailsStyle}>
+        <PlanTitle
+          title={title}
+          onSave={(newTitle) =>
+            handlePlanDetailsSave(newTitle, startDate, endDate)
+          }
+          saving={savingTitle || savingDates}
+        />
 
-      <PlanDate
-        startDate={startDate}
-        endDate={endDate}
-        onSave={handleDatesSave}
-        saving={savingDates}
-      />
+        <PlanDate
+          title={title}
+          startDate={startDate}
+          endDate={endDate}
+          onSave={(newTitle, newStartDate, newEndDate) =>
+            handlePlanDetailsSave(newTitle, newStartDate, newEndDate)
+          }
+          saving={savingTitle || savingDates}
+        />
+      </div>
 
       <PlanDayTabs
         dates={dates}
@@ -334,4 +330,13 @@ const backButtonStyle = css`
   &:hover {
     opacity: 0.85;
   }
+`;
+
+const planDetailsStyle = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
 `;

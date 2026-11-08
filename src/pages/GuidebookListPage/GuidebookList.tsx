@@ -3,20 +3,25 @@
 import { css } from "@emotion/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AddPlanbutton } from "./components/AddPlanbutton";
-import { PlanBox } from "./components/PlanBox";
-import CreateScheduleModal from "../AddPlanSchedulePage/components/CreateScheduleModal";
-import { createPlan, getPlans, deletePlan } from "../../services/planService";
-import { createPlanShare } from "../../services/planService";
+import { AddPlanbutton } from "./components/AddGuidebookButton";
+import { PlanBox } from "./components/GuidebookBox";
+import CreateScheduleModal from "../CreateSchedulePage/components/CreateScheduleModal";
+import {
+  createPlan,
+  getPlans,
+  deletePlan,
+  createPlanShare,
+} from "../../services/planService";
+import type { Plan } from "../../services/planService";
 
-export const PlanList = () => {
+export const GuidebookList = () => {
   const navigate = useNavigate();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [plans, setPlans] = useState<any[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
+  // しおり一覧を取得
   useEffect(() => {
     const loadPlans = async () => {
       try {
@@ -30,10 +35,12 @@ export const PlanList = () => {
     loadPlans();
   }, []);
 
+  // 新しいしおりを作成
   const handleCreatePlan = () => {
     setIsModalOpen(true);
   };
 
+  // しおりを保存
   const handleSavePlan = async (
     title: string,
     startDate: string,
@@ -55,6 +62,25 @@ export const PlanList = () => {
     } catch (error) {
       console.error("しおりの保存に失敗しました:", error);
       alert("しおりの保存に失敗しました");
+    }
+  };
+
+  // 共有リンクを発行してコピー
+  const handleSharePlan = async (planId: string) => {
+    try {
+      const token = await createPlanShare(planId);
+      const shareUrl = `${window.location.origin}/shared/${token}`;
+
+      await navigator.clipboard.writeText(shareUrl);
+
+      alert("共有リンクをコピーしました！\n" + "LINEなどで相手に送ってね。");
+
+      setOpenMenuId(null);
+    } catch (error) {
+      console.error("共有リンクの発行に失敗しました:", error);
+      alert(
+        "共有リンクを発行できませんでした。Consoleのエラーを確認してください。",
+      );
     }
   };
 
@@ -92,26 +118,7 @@ export const PlanList = () => {
                 <button
                   css={menuItemStyle}
                   type="button"
-                  onClick={async () => {
-                    try {
-                      const token = await createPlanShare(plan.id);
-                      const shareUrl = `${window.location.origin}/shared/${token}`;
-
-                      await navigator.clipboard.writeText(shareUrl);
-
-                      alert(
-                        "共有リンクをコピーしました！\n" +
-                          "LINEなどで相手に送ってね。",
-                      );
-
-                      setOpenMenuId(null);
-                    } catch (error) {
-                      console.error("共有リンクの発行に失敗しました:", error);
-                      alert(
-                        "共有リンクを発行できませんでした。Consoleのエラーを確認してください。",
-                      );
-                    }
-                  }}
+                  onClick={() => handleSharePlan(plan.id)}
                 >
                   共有
                 </button>

@@ -2,7 +2,7 @@
 
 import { css } from "@emotion/react";
 
-// Addplanscheduleからの情報入手 //
+//CreateScheduleからの情報入手 //
 type ScheduleFormProps = {
   day: string;
   startDate?: string;
