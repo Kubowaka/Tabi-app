@@ -64,11 +64,12 @@ export const searchPlaces = async (
 };
 
 // キーワードでスポットを検索
+// キーワードでスポットを検索
 export const searchPlacesText = async (
   query: string,
   placeType: string,
-  lat: number,
-  lng: number,
+  lat?: number,
+  lng?: number,
 ) => {
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchText",
@@ -82,23 +83,21 @@ export const searchPlacesText = async (
       },
       body: JSON.stringify({
         textQuery: query,
-        ...(placeType && {
-          includedType: placeType,
-        }),
+        ...(placeType && { includedType: placeType }),
         pageSize: 20,
         languageCode: "ja",
-        locationRestriction: {
-          rectangle: {
-            low: {
-              latitude: lat - 0.027,
-              longitude: lng - 0.034,
+        ...(lat !== undefined &&
+          lng !== undefined && {
+            locationBias: {
+              circle: {
+                center: {
+                  latitude: lat,
+                  longitude: lng,
+                },
+                radius: 30000,
+              },
             },
-            high: {
-              latitude: lat + 0.027,
-              longitude: lng + 0.034,
-            },
-          },
-        },
+          }),
       }),
     },
   );

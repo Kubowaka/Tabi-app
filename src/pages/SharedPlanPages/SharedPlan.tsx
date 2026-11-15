@@ -196,6 +196,7 @@ const titleStyle = css`
   margin: 0;
   font-size: 18px;
   font-weight: bold;
+  color: #222;
   overflow-wrap: anywhere;
 `;
 

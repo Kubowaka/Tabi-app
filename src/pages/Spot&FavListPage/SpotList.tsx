@@ -1,10 +1,11 @@
+import { auth } from "../../firebase";
 import { useState, useEffect, useCallback } from "react";
 import AleaSelect from "./components/AleaSelectBox/AleaSelect";
 import { SpotCard } from "./components/SpotBox/SpotCard";
 import { SpotGrid } from "./components/SpotBox/SpotGrid";
 import { SpotBackground } from "./components/SpotBox/SpotBackground";
 import CategoryTabs, { type CategoryKey } from "./components/CategoryTabs";
-import { searchPlaces, getPhotoUrl } from "../../API/places";
+import { searchPlaces, searchPlacesText, getPhotoUrl } from "../../API/places";
 import {
   getFavorites,
   addFavorite,
@@ -33,6 +34,11 @@ export const SpotList = () => {
     lng: number;
   } | null>(null);
 
+  const [selectedArea, setSelectedArea] = useState({
+    prefecture: "",
+    city: "",
+  });
+
   const [loading, setLoading] = useState(false);
   const [searchError, setSearchError] = useState("");
 
@@ -45,6 +51,12 @@ export const SpotList = () => {
 
       return { lat, lng };
     });
+  }, []);
+
+  //  県・市区町村の変更を受け取る
+  const handleAreaChange = useCallback((prefecture: string, city: string) => {
+    setSelectedArea({ prefecture, city });
+    setCoordinates(null);
   }, []);
 
   // お気に入り一覧を取得
@@ -73,7 +85,6 @@ export const SpotList = () => {
   // お気に入り登録・解除
   const toggleFavorite = async (spot: any) => {
     const favorite = favoriteSpots.find((item) => item.spotId === spot.id);
-
     try {
       if (favorite) {
         await deleteFavorite(favorite.id);
@@ -89,13 +100,23 @@ export const SpotList = () => {
       }
     } catch (error) {
       console.error("お気に入りの変更に失敗しました:", error);
-      alert("お気に入りの変更に失敗しました");
+
+      if (!auth.currentUser) {
+        alert("お気に入り機能はログイン後にご使用いただけます");
+      }
     }
   };
 
   // スポット検索
   useEffect(() => {
-    if (!coordinates) return;
+    if (!selectedArea.prefecture) {
+      setSpots([]);
+      setLoading(false);
+      return;
+    }
+
+    // 市区町村が選択されている場合は座標取得を待つ
+    if (selectedArea.city && !coordinates) return;
 
     let active = true;
 
@@ -121,18 +142,38 @@ export const SpotList = () => {
         ];
       }
 
+      const typeNames: Record<string, string> = {
+        tourist_attraction: "観光スポット",
+        historical_landmark: "歴史的名所",
+        cultural_landmark: "文化的名所",
+        restaurant: "レストラン",
+        cafe: "カフェ",
+        dessert_restaurant: "スイーツ",
+        adventure_sports_center: "アクティビティ",
+        amusement_center: "レジャー施設",
+      };
+
       try {
         const allPlaces: any[] = [];
 
-        // APIを同時ではなく順番に呼び出す
         for (const placeType of placeTypes) {
           if (!active) return;
 
-          const result = await searchPlaces(
-            placeType,
-            coordinates.lat,
-            coordinates.lng,
-          );
+          let result;
+
+          if (selectedArea.city && coordinates) {
+            // 市区町村がある場合：周辺検索
+            result = await searchPlaces(
+              placeType,
+              coordinates.lat,
+              coordinates.lng,
+            );
+          } else {
+            // 県だけの場合：テキスト検索
+            const query = `${selectedArea.prefecture} ${typeNames[placeType]}`;
+
+            result = await searchPlacesText(query, placeType);
+          }
 
           allPlaces.push(...(result.places ?? []));
         }
@@ -164,11 +205,14 @@ export const SpotList = () => {
     return () => {
       active = false;
     };
-  }, [coordinates, category]);
+  }, [coordinates, category, selectedArea]);
 
   return (
     <>
-      <AleaSelect onCoordinatesChange={handleCoordinatesChange} />
+      <AleaSelect
+        onCoordinatesChange={handleCoordinatesChange}
+        onAreaChange={handleAreaChange}
+      />
 
       <CategoryTabs
         category={category}

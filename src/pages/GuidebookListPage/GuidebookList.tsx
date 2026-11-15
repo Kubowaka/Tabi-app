@@ -1,5 +1,6 @@
 /// 旅のしおりの一覧表示ページ ///
 
+import { auth } from "../../firebase";
 import { css } from "@emotion/react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +47,12 @@ export const GuidebookList = () => {
     startDate: string,
     endDate: string,
   ) => {
+    // ログイン状態を確認
+    if (!auth.currentUser) {
+      alert("しおり機能はログイン後にご使用いただけます");
+      return;
+    }
+    
     try {
       const planId = await createPlan(title, startDate, endDate);
 
