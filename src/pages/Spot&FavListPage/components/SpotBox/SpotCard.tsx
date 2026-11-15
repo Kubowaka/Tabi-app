@@ -10,6 +10,7 @@ type SpotCardProps = {
 };
 
 export const SpotCard = ({
+  name,
   image,
   title,
   description,
@@ -20,26 +21,35 @@ export const SpotCard = ({
     <article css={cardStyle}>
       <div css={imageArea}>
         {image ? (
-          <img src={image} css={imageStyle} />
+          <img src={image} alt={name || title} css={imageStyle} />
         ) : (
           <div css={noImageStyle}>No image</div>
         )}
 
-        <button css={favoriteButton} onClick={onFavoriteClick} type="button">
+        <button
+          css={favoriteButton}
+          onClick={onFavoriteClick}
+          type="button"
+          aria-label={
+            favorite
+              ? `${title}をお気に入りから削除`
+              : `${title}をお気に入りに追加`
+          }
+          aria-pressed={favorite}
+        >
           {favorite ? "⭐" : "☆"}
         </button>
       </div>
 
       <div css={contentStyle}>
         <h3 css={titleStyle}>{title}</h3>
-
         <p css={descriptionStyle}>{description}</p>
       </div>
     </article>
   );
 };
 
-///CSS
+// CSS
 
 const cardStyle = css`
   width: 180px;
@@ -85,15 +95,12 @@ const favoriteButton = css`
   position: absolute;
   top: 8px;
   right: 8px;
-
   width: 36px;
   height: 36px;
-
   border: none;
   border-radius: 50%;
   background: white;
   cursor: pointer;
-
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 `;
 

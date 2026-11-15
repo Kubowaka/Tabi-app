@@ -10,6 +10,7 @@ import {
   where,
   setDoc,
   serverTimestamp,
+  writeBatch,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -35,6 +36,7 @@ export type Plan = {
 /**
  * 共有中の旅行プランを最新データに同期する
  */
+
 const syncActivePlanShares = async (planId: string, userId: string) => {
   // 旅行プランを取得
   const planRef = doc(db, "plans", planId);
@@ -78,9 +80,18 @@ const syncActivePlanShares = async (planId: string, userId: string) => {
 
   const sharesSnapshot = await getDocs(sharesQuery);
 
-  // 有効な共有データだけ最新状態に更新
+  // 有効な共有データだけ更新
   for (const share of sharesSnapshot.docs) {
-    if (share.data().isActive !== true) continue;
+    const shareData = share.data();
+
+    if (
+      shareData.isActive !== true ||
+      shareData.ownerId !== userId ||
+      shareData.planId !== planId ||
+      shareData.token !== share.id
+    ) {
+      continue;
+    }
 
     await updateDoc(share.ref, {
       plan: {
@@ -139,7 +150,7 @@ export const getPlans = async (): Promise<Plan[]> => {
   });
 };
 
-export const getSchedules = async (planId: string) => {
+export const getSchedules = async (planId: string): Promise<Schedule[]> => {
   const user = auth.currentUser;
 
   if (!user) {
@@ -154,16 +165,20 @@ export const getSchedules = async (planId: string) => {
 
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    planId: doc.data().planId,
-    userId: doc.data().userId,
-    day: doc.data().day,
-    title: doc.data().title ?? "",
-    startTime: doc.data().startTime,
-    endTime: doc.data().endTime,
-    memo: doc.data().memo,
-  })) as Schedule[];
+  return snapshot.docs.map((scheduleDoc) => {
+    const data = scheduleDoc.data();
+
+    return {
+      id: scheduleDoc.id,
+      planId: data.planId ?? "",
+      userId: data.userId ?? "",
+      day: data.day ?? "",
+      title: data.title ?? "",
+      startTime: data.startTime ?? "",
+      endTime: data.endTime ?? "",
+      memo: data.memo ?? "",
+    };
+  });
 };
 
 export const createSchedule = async (
@@ -180,6 +195,20 @@ export const createSchedule = async (
     throw new Error("ログインしていません");
   }
 
+  // 登録先の旅行計画を取得
+  const planRef = doc(db, "plans", planId);
+  const planSnapshot = await getDoc(planRef);
+
+  if (!planSnapshot.exists()) {
+    throw new Error("旅行プランが見つかりません");
+  }
+
+  // 旅行計画の所有者を確認
+  if (planSnapshot.data().userId !== user.uid) {
+    throw new Error("この旅行プランに予定を追加する権限がありません");
+  }
+
+  // スケジュールを登録
   await addDoc(collection(db, "schedules"), {
     planId,
     userId: user.uid,
@@ -188,9 +217,10 @@ export const createSchedule = async (
     startTime,
     endTime,
     memo,
-    createdAt: new Date(),
+    createdAt: serverTimestamp(),
   });
 
+  // 有効な共有データを同期
   await syncActivePlanShares(planId, user.uid);
 };
 
@@ -226,7 +256,70 @@ export const deletePlan = async (planId: string) => {
     throw new Error("ログインしていません");
   }
 
-  await deleteDoc(doc(db, "plans", planId));
+  // 削除対象の旅行プランを取得
+  const planRef = doc(db, "plans", planId);
+  const planSnapshot = await getDoc(planRef);
+
+  if (!planSnapshot.exists()) {
+    throw new Error("旅行プランが見つかりません");
+  }
+
+  // 所有者を確認
+  if (planSnapshot.data().userId !== user.uid) {
+    throw new Error("この旅行プランを削除する権限がありません");
+  }
+
+  // 関連する予定を取得
+  const schedulesQuery = query(
+    collection(db, "schedules"),
+    where("planId", "==", planId),
+    where("userId", "==", user.uid),
+  );
+
+  const schedulesSnapshot = await getDocs(schedulesQuery);
+
+  // 関連する共有データを取得
+  const sharesQuery = query(
+    collection(db, "planShares"),
+    where("planId", "==", planId),
+    where("ownerId", "==", user.uid),
+  );
+
+  const sharesSnapshot = await getDocs(sharesQuery);
+
+  // Firestoreのバッチ処理（最大500操作）
+  const operations = [
+    ...schedulesSnapshot.docs.map((schedule) => ({
+      type: "delete" as const,
+      ref: schedule.ref,
+    })),
+    ...sharesSnapshot.docs.map((share) => ({
+      type: "disable" as const,
+      ref: share.ref,
+    })),
+  ];
+
+  // 500件を超えないように分割して処理
+  for (let i = 0; i < operations.length; i += 450) {
+    const batch = writeBatch(db);
+    const chunk = operations.slice(i, i + 450);
+
+    chunk.forEach((operation) => {
+      if (operation.type === "delete") {
+        batch.delete(operation.ref);
+      } else {
+        batch.update(operation.ref, {
+          isActive: false,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    });
+
+    await batch.commit();
+  }
+
+  // 関連データの処理が完了してから旅行プランを削除
+  await deleteDoc(planRef);
 };
 
 export const updateSchedule = async (
@@ -256,6 +349,14 @@ export const updateSchedule = async (
     throw new Error("この予定を編集する権限がありません");
   }
 
+  // 親となる旅行計画の所有者も確認
+  const planRef = doc(db, "plans", scheduleData.planId);
+  const planSnapshot = await getDoc(planRef);
+
+  if (!planSnapshot.exists() || planSnapshot.data().userId !== user.uid) {
+    throw new Error("この旅行プランを編集する権限がありません");
+  }
+
   await updateDoc(scheduleRef, {
     day,
     title,
@@ -267,7 +368,6 @@ export const updateSchedule = async (
   await syncActivePlanShares(scheduleData.planId, user.uid);
 };
 
-// タイトル・開始日・終了日をまとめて更新
 // タイトル・開始日・終了日をまとめて更新
 export const updatePlanDetails = async (
   planId: string,
@@ -353,7 +453,6 @@ export const createPlanShare = async (planId: string) => {
     };
   });
 
-  console.log("共有データの保存処理を開始します");
 
   // 既存の共有設定を確認
   const sharesQuery = query(
@@ -368,9 +467,6 @@ export const createPlanShare = async (planId: string) => {
     (share) => share.data().isActive === true,
   );
 
-  // const shareRef = activeShare
-  //   ? activeShare.ref
-  //   : doc(collection(db, "planShares"));
 
   const token = activeShare
     ? activeShare.id
@@ -392,8 +488,6 @@ export const createPlanShare = async (planId: string) => {
     createdAt: activeShare ? activeShare.data().createdAt : serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
-  console.log("共有データを保存しました:", token);
-  console.log("共有データの保存が完了しました");
 
   return token;
 };

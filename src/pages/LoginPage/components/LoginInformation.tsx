@@ -1,4 +1,5 @@
-/*ユーザーネーム&パスワード入力欄*/
+/* メールアドレス・パスワード入力欄 */
+
 import { css } from "@emotion/react";
 
 type LoginInformationProps = {
@@ -16,16 +17,19 @@ export const LoginInformation = ({
 }: LoginInformationProps) => {
   return (
     <div css={formStyle}>
-      {/* ユーザー名 */}
+      {/* メールアドレス */}
       <div css={inputAreaStyle}>
-        <label htmlFor="username">ユーザー名</label>
+        <label htmlFor="email">メールアドレス</label>
         <input
           css={inputStyle}
-          id="username"
+          id="email"
+          name="email"
           type="email"
           placeholder="your@email.com"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
       </div>
 
@@ -35,10 +39,13 @@ export const LoginInformation = ({
         <input
           css={inputStyle}
           id="password"
+          name="password"
           type="password"
           placeholder="パスワードを入力"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
       </div>
     </div>

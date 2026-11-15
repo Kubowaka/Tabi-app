@@ -70,20 +70,15 @@ const tabStyle = css`
     box-shadow 120ms ease,
     background 120ms ease;
 
-  &:focus {
-    background-color: #ffae00;
-    color: white;
+  &:focus-visible {
+    outline: 2px solid #333;
+    outline-offset: 2px;
   }
 
   @media (max-width: 420px) {
     padding: 8px 4px;
     font-size: 14px;
   }
-
-  /* @media (min-width: 1024px) {
-    margin-left: 90px;
-    margin-right: 90px;
-  } */
 `;
 
 const activeStyle = css`

@@ -35,7 +35,7 @@ export const CreateSchedule = () => {
   const scheduleId = state?.scheduleId;
   const favorite = state?.favorite;
 
-  const planTitle = state?.planTitle || state?.title || "";
+const planTitle = state?.planTitle || "";
   const startDate = state?.startDate || "";
   const endDate = state?.endDate || "";
 

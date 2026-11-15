@@ -12,6 +12,35 @@ import {
   deleteFavorite,
 } from "../../services/favorieteService";
 
+// スポット情報の型
+type Place = {
+  id: string;
+  displayName?: {
+    text?: string;
+  };
+  photos?: {
+    name?: string;
+  }[];
+
+  editorialSummary?: {
+    text?: string;
+  };
+  primaryType?: string;
+  formattedAddress?: string;
+};
+
+// お気に入り情報の型
+type Favorite = {
+  id: string;
+  userId: string;
+  spotId: string;
+  name: string;
+  address: string;
+  imageName: string;
+  description: string;
+  primaryType: string;
+};
+
 const typeName: Record<string, string> = {
   tourist_attraction: "観光スポット",
   historical_landmark: "歴史的名所",
@@ -21,13 +50,29 @@ const typeName: Record<string, string> = {
   nature_preserve: "自然保護区",
 };
 
-export const SpotList = () => {
-  const [spots, setSpots] = useState<any[]>([]);
-  const [favoriteSpots, setFavoriteSpots] = useState<any[]>([]);
+// localStorageのカテゴリ値を確認
+const getInitialCategory = (): CategoryKey => {
+  const savedCategory = localStorage.getItem("category");
 
-  const [category, setCategory] = useState<CategoryKey>(
-    (localStorage.getItem("category") as CategoryKey) || "tour",
+  if (
+    savedCategory === "tour" ||
+    savedCategory === "gourmet" ||
+    savedCategory === "experience"
+  ) {
+    return savedCategory;
+  }
+
+  return "tour";
+};
+
+export const SpotList = () => {
+  const [spots, setSpots] = useState<Place[]>([]);
+  const [favoriteSpots, setFavoriteSpots] = useState<Favorite[]>([]);
+  const [processingFavoriteIds, setProcessingFavoriteIds] = useState<string[]>(
+    [],
   );
+
+  const [category, setCategory] = useState<CategoryKey>(getInitialCategory);
 
   const [coordinates, setCoordinates] = useState<{
     lat: number;
@@ -53,7 +98,7 @@ export const SpotList = () => {
     });
   }, []);
 
-  //  県・市区町村の変更を受け取る
+  // 都道府県・市区町村の変更を受け取る
   const handleAreaChange = useCallback((prefecture: string, city: string) => {
     setSelectedArea({ prefecture, city });
     setCoordinates(null);
@@ -75,7 +120,7 @@ export const SpotList = () => {
       }
     };
 
-    loadFavorites();
+    void loadFavorites();
 
     return () => {
       active = false;
@@ -83,9 +128,14 @@ export const SpotList = () => {
   }, []);
 
   // お気に入り登録・解除
-  const toggleFavorite = async (spot: any) => {
+  const toggleFavorite = async (spot: Place) => {
+    if (processingFavoriteIds.includes(spot.id)) return;
+
     const favorite = favoriteSpots.find((item) => item.spotId === spot.id);
+
     try {
+      setProcessingFavoriteIds((currentIds) => [...currentIds, spot.id]);
+
       if (favorite) {
         await deleteFavorite(favorite.id);
 
@@ -103,7 +153,13 @@ export const SpotList = () => {
 
       if (!auth.currentUser) {
         alert("お気に入り機能はログイン後にご使用いただけます");
+      } else {
+        alert("お気に入りの変更に失敗しました。もう一度お試しください。");
       }
+    } finally {
+      setProcessingFavoriteIds((currentIds) =>
+        currentIds.filter((id) => id !== spot.id),
+      );
     }
   };
 
@@ -111,12 +167,16 @@ export const SpotList = () => {
   useEffect(() => {
     if (!selectedArea.prefecture) {
       setSpots([]);
+      setSearchError("");
       setLoading(false);
       return;
     }
 
     // 市区町村が選択されている場合は座標取得を待つ
-    if (selectedArea.city && !coordinates) return;
+    if (selectedArea.city && !coordinates) {
+      setLoading(false);
+      return;
+    }
 
     let active = true;
 
@@ -154,7 +214,7 @@ export const SpotList = () => {
       };
 
       try {
-        const allPlaces: any[] = [];
+        const allPlaces: Place[] = [];
 
         for (const placeType of placeTypes) {
           if (!active) return;
@@ -175,11 +235,17 @@ export const SpotList = () => {
             result = await searchPlacesText(query, placeType);
           }
 
-          allPlaces.push(...(result.places ?? []));
+          const placesWithId = (result.places ?? []).filter(
+            (place): place is typeof place & { id: string } =>
+              typeof place.id === "string" && place.id.length > 0,
+          );
+
+          allPlaces.push(...placesWithId);
         }
 
         if (!active) return;
 
+        // 重複するスポットを除外
         const uniquePlaces = Array.from(
           new Map(allPlaces.map((place) => [place.id, place])).values(),
         );
@@ -200,7 +266,7 @@ export const SpotList = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
 
     return () => {
       active = false;
@@ -233,7 +299,7 @@ export const SpotList = () => {
               <p>検索結果がまだ表示されていません</p>
             )}
 
-            {spots.map((spot: any) => (
+            {spots.map((spot) => (
               <SpotCard
                 key={spot.id}
                 name={spot.displayName?.text ?? ""}
@@ -243,7 +309,7 @@ export const SpotList = () => {
                 title={spot.displayName?.text ?? ""}
                 description={
                   spot.editorialSummary?.text ??
-                  typeName[spot.primaryType] ??
+                  typeName[spot.primaryType ?? ""] ??
                   spot.formattedAddress ??
                   ""
                 }

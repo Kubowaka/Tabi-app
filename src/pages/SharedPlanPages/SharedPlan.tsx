@@ -54,7 +54,7 @@ export const SharedPlan = () => {
         setData(result as SharedPlanData);
       } catch (err) {
         console.error("共有プランの読み込みに失敗しました:", err);
-        if (!cancelled) setError("旅行プランを読み込めませんでした。");
+        if (!cancelled) setError("旅行プランの共有が停止されました。");
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -1,10 +1,42 @@
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
+// Google Places APIのレスポンス型
+type PlacesApiResponse = {
+  places?: {
+    id?: string;
+    displayName?: {
+      text?: string;
+    };
+    formattedAddress?: string;
+    photos?: {
+      name?: string;
+    }[];
+    location?: {
+      latitude?: number;
+      longitude?: number;
+    };
+    editorialSummary?: {
+      text?: string;
+    };
+    types?: string[];
+    primaryType?: string;
+  }[];
+};
+
+// APIキーの確認
+const checkApiKey = () => {
+  if (!API_KEY) {
+    throw new Error("Google Maps APIキーが設定されていません");
+  }
+};
+
 // Google Places APIのレスポンスとエラーを処理
-const parsePlacesResponse = async (response: Response) => {
+const parsePlacesResponse = async (
+  response: Response,
+): Promise<PlacesApiResponse> => {
   const text = await response.text();
 
-  let data: any;
+  let data: unknown;
 
   try {
     data = JSON.parse(text);
@@ -20,11 +52,13 @@ const parsePlacesResponse = async (response: Response) => {
     throw new Error(`Places API Error: ${response.status}`);
   }
 
-  return data;
+  return data as PlacesApiResponse;
 };
 
 // 写真URLを取得
 export const getPhotoUrl = (photoName: string) => {
+  checkApiKey();
+
   return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=400&key=${API_KEY}`;
 };
 
@@ -34,6 +68,8 @@ export const searchPlaces = async (
   lat: number,
   lng: number,
 ) => {
+  checkApiKey();
+
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchNearby",
     {
@@ -64,13 +100,14 @@ export const searchPlaces = async (
 };
 
 // キーワードでスポットを検索
-// キーワードでスポットを検索
 export const searchPlacesText = async (
   query: string,
   placeType: string,
   lat?: number,
   lng?: number,
 ) => {
+  checkApiKey();
+
   const response = await fetch(
     "https://places.googleapis.com/v1/places:searchText",
     {

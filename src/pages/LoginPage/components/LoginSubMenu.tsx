@@ -1,17 +1,18 @@
-/*パスワード忘れ＆新規会員登録*/
+/* パスワード忘れ＆新規会員登録 */
 
 import { css } from "@emotion/react";
+import { Link } from "react-router-dom";
 
 export const LoginSubMenu = () => {
   return (
     <div css={subMenuStyle}>
-      <a css={subMenuLinkStyle} href="/forgot-password">
+      <Link css={subMenuLinkStyle} to="/forgot-password">
         パスワードを忘れた方はこちら
-      </a>
+      </Link>
 
-      <a css={subMenuLinkStyle} href="/create-account">
+      <Link css={subMenuLinkStyle} to="/create-account">
         新規会員登録はこちら
-      </a>
+      </Link>
     </div>
   );
 };

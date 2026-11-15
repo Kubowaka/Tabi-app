@@ -1,6 +1,6 @@
 /** @jsxImportSource @emotion/react */
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { css } from "@emotion/react";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../../firebase";
@@ -14,28 +14,44 @@ export const ForgotPassword = () => {
 
   const navigate = useNavigate();
 
-  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleResetPassword = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (loading) return;
 
     setMessage("");
     setError("");
 
-    if (!email.trim()) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
       setError("メールアドレスを入力してください。");
       return;
     }
 
-    try {
-      setLoading(true);
+    setLoading(true);
 
-      await sendPasswordResetEmail(auth, email.trim());
+    try {
+      await sendPasswordResetEmail(auth, trimmedEmail);
 
       setMessage("再設定メールを送信しました。メールをご確認ください。");
     } catch (err) {
-      console.error(err);
-      setError(
-        "メールの送信に失敗しました。メールアドレスを確認してください。",
-      );
+      console.error("パスワード再設定メールの送信に失敗しました:", err);
+
+      const errorCode =
+        typeof err === "object" && err !== null && "code" in err
+          ? err.code
+          : "";
+
+      if (errorCode === "auth/invalid-email") {
+        setError("メールアドレスの形式が正しくありません。");
+      } else if (errorCode === "auth/too-many-requests") {
+        setError("送信回数が多すぎます。時間をおいて再度お試しください。");
+      } else {
+        setError(
+          "メールの送信に失敗しました。時間をおいて再度お試しください。",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -67,7 +83,9 @@ export const ForgotPassword = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="example@email.com"
+            autoComplete="email"
             required
+            disabled={loading}
             css={styles.input}
           />
 
@@ -82,7 +100,8 @@ export const ForgotPassword = () => {
 
         <button
           type="button"
-          onClick={() => navigate("/Login")}
+          onClick={() => navigate("/login")}
+          disabled={loading}
           css={styles.backButton}
         >
           ← ログイン画面に戻る
@@ -168,6 +187,11 @@ const styles = {
       border-color: #8298d6;
       box-shadow: 0 0 0 3px rgba(130, 152, 214, 0.15);
     }
+
+    &:disabled {
+      background: #f5f5f5;
+      cursor: not-allowed;
+    }
   `,
 
   submitButton: css`
@@ -224,9 +248,14 @@ const styles = {
     cursor: pointer;
     transition: 0.2s;
 
-    &:hover {
+    &:hover:not(:disabled) {
       color: #4e659f;
       text-decoration: underline;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
   `,
 };

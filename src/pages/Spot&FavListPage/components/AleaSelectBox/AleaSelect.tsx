@@ -128,7 +128,11 @@ export default function AleaSelect({
       try {
         setLoadingCities(true);
         const data = await getCities(selectedPrefecture);
-        setCities(data.response?.location ?? []);
+        setCities(
+          (data.response?.location ?? []).flatMap((location) =>
+            typeof location.city === "string" ? [{ city: location.city }] : [],
+          ),
+        );
       } catch (error) {
         console.error("市区町村の取得に失敗しました:", error);
         setCities([]);

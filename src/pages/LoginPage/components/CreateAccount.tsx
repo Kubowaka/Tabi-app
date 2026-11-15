@@ -1,8 +1,8 @@
 import { css } from "@emotion/react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 
 export const CreateAccount = () => {
@@ -14,11 +14,16 @@ export const CreateAccount = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setError("");
 
-    if (!email.trim() || !password || !confirmPassword) {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password || !confirmPassword) {
       setError("すべての項目を入力してください");
       return;
     }
@@ -38,13 +43,13 @@ export const CreateAccount = () => {
     try {
       const credential = await createUserWithEmailAndPassword(
         auth,
-        email.trim(),
+        trimmedEmail,
         password,
       );
 
       await setDoc(doc(db, "users", credential.user.uid), {
         email: credential.user.email,
-        createdAt: new Date(),
+        createdAt: serverTimestamp(),
       });
 
       alert("会員登録が完了しました！");
@@ -52,9 +57,18 @@ export const CreateAccount = () => {
     } catch (error) {
       console.error("会員登録に失敗しました:", error);
 
-      setError(
-        "会員登録に失敗しました。メールアドレスが既に登録されていないか確認してください。",
-      );
+      const errorCode =
+        error instanceof Error && "code" in error ? error.code : "";
+
+      if (errorCode === "auth/email-already-in-use") {
+        setError("このメールアドレスは既に登録されています");
+      } else if (errorCode === "auth/invalid-email") {
+        setError("メールアドレスの形式が正しくありません");
+      } else if (errorCode === "auth/weak-password") {
+        setError("パスワードが弱すぎます。別のパスワードを設定してください");
+      } else {
+        setError("会員登録に失敗しました。時間をおいて再度お試しください");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +83,9 @@ export const CreateAccount = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
+          autoComplete="email"
           required
+          disabled={loading}
         />
 
         <label>パスワード</label>
@@ -78,7 +94,9 @@ export const CreateAccount = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="6文字以上"
+          autoComplete="new-password"
           required
+          disabled={loading}
         />
 
         <label>パスワード（確認用）</label>
@@ -86,7 +104,9 @@ export const CreateAccount = () => {
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          autoComplete="new-password"
           required
+          disabled={loading}
         />
 
         {error && <p css={errorStyle}>{error}</p>}
@@ -95,7 +115,11 @@ export const CreateAccount = () => {
           {loading ? "登録中..." : "会員登録"}
         </button>
 
-        <button type="button" onClick={() => navigate("/Login")}>
+        <button
+          type="button"
+          onClick={() => navigate("/login")}
+          disabled={loading}
+        >
           ログイン画面へ戻る
         </button>
       </form>
@@ -139,7 +163,7 @@ const formStyle = css`
     font-weight: bold;
     cursor: pointer;
 
-    &:hover {
+    &:hover:not(:disabled) {
       opacity: 0.7;
       text-decoration: underline;
       color: #fcfcfc;

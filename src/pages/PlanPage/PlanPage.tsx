@@ -26,7 +26,6 @@ export const PlanPage = () => {
 
   const initialTitle = location.state?.title || "入力欄";
   const [startDate, setStartDate] = useState(location.state?.startDate || "");
-
   const [endDate, setEndDate] = useState(location.state?.endDate || "");
   const planId = location.state?.planId;
 
@@ -41,7 +40,7 @@ export const PlanPage = () => {
     setTitle(initialTitle);
   }, [initialTitle]);
 
-  //★新規旅行タイトル&日付を保存
+  // 旅行タイトル・日付を保存
   const handlePlanDetailsSave = async (
     newTitle: string,
     newStartDate: string,
@@ -73,7 +72,6 @@ export const PlanPage = () => {
       setSavingTitle(true);
       setSavingDates(true);
 
-      // タイトル・開始日・終了日を1回の updateDoc で保存
       await updatePlanDetails(planId, trimmedTitle, newStartDate, newEndDate);
 
       setTitle(trimmedTitle);
@@ -124,18 +122,20 @@ export const PlanPage = () => {
   };
 
   const dayCount = getDayCount();
+
   const dates = [
     "すべて",
     ...Array.from({ length: dayCount }, (_, index) => `${index + 1}日目`),
   ];
 
+  // 予定一覧を取得
   useEffect(() => {
     const loadSchedules = async () => {
       if (!planId) return;
 
       try {
         const data = await getSchedules(planId);
-        setSchedules(data as Schedule[]);
+        setSchedules(data);
       } catch (error) {
         console.error("予定の取得に失敗しました:", error);
       }
@@ -144,12 +144,12 @@ export const PlanPage = () => {
     loadSchedules();
   }, [planId]);
 
-  const filteredSchedules = (
-    selectedDate === "すべて"
+  // 選択した日付の予定を表示・並び替え
+  const filteredSchedules = [
+    ...(selectedDate === "すべて"
       ? schedules
-      : schedules.filter((schedule) => schedule.day === selectedDate)
-  ).sort((a, b) => {
-    // まず旅行の日数順に並べる
+      : schedules.filter((schedule) => schedule.day === selectedDate)),
+  ].sort((a, b) => {
     const dayA = Number.parseInt(a.day, 10);
     const dayB = Number.parseInt(b.day, 10);
 
@@ -157,10 +157,10 @@ export const PlanPage = () => {
       return dayA - dayB;
     }
 
-    // 同じ日なら開始時刻が早い順に並べる
     return a.startTime.localeCompare(b.startTime);
   });
 
+  // 予定を追加
   const handleAddSchedule = () => {
     navigate("/add-plan-schedule", {
       state: {
@@ -172,11 +172,19 @@ export const PlanPage = () => {
     });
   };
 
+  // 予定を編集
   const handleEditSchedule = (schedule: Schedule) => {
     navigate("/add-plan-schedule", {
       state: {
         planId,
         scheduleId: schedule.id,
+
+        // しおりの情報
+        planTitle: title,
+        startDate,
+        endDate,
+
+        // 編集する予定の情報
         day: schedule.day,
         title: schedule.title,
         startTime: schedule.startTime,
@@ -186,6 +194,7 @@ export const PlanPage = () => {
     });
   };
 
+  // 予定を削除
   const handleDeleteSchedule = async (scheduleId: string) => {
     if (!window.confirm("この予定を削除しますか？")) {
       return;
@@ -193,11 +202,13 @@ export const PlanPage = () => {
 
     try {
       await deleteSchedule(scheduleId);
+
       setSchedules((currentSchedules) =>
         currentSchedules.filter(
           (currentSchedule) => currentSchedule.id !== scheduleId,
         ),
       );
+
       setOpenMenuId(null);
     } catch (error) {
       console.error("予定の削除に失敗しました:", error);
@@ -240,7 +251,9 @@ export const PlanPage = () => {
           startDate={startDate}
           openMenuId={openMenuId}
           onMenuToggle={(scheduleId) => {
-            setOpenMenuId(openMenuId === scheduleId ? null : scheduleId);
+            setOpenMenuId((currentId) =>
+              currentId === scheduleId ? null : scheduleId,
+            );
           }}
           onEdit={handleEditSchedule}
           onDelete={handleDeleteSchedule}
@@ -252,6 +265,7 @@ export const PlanPage = () => {
           css={backButtonStyle}
           onClick={() => navigate("/plan-list")}
           type="button"
+          aria-label="旅行プラン一覧に戻る"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -260,9 +274,9 @@ export const PlanPage = () => {
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
             className="lucide lucide-undo-2 preview-icon"
           >
             <path d="M9 14 4 9l5-5" />
@@ -270,7 +284,12 @@ export const PlanPage = () => {
           </svg>
         </button>
 
-        <button css={plusButtonStyle} onClick={handleAddSchedule} type="button">
+        <button
+          css={plusButtonStyle}
+          onClick={handleAddSchedule}
+          type="button"
+          aria-label="予定を追加"
+        >
           ＋
         </button>
       </div>

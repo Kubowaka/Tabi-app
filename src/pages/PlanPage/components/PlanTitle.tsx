@@ -16,12 +16,17 @@ export const PlanTitle = ({
 }: PlanTitleProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(title);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     setEditTitle(title);
   }, [title]);
 
+  const isSaving = saving || isSubmitting;
+
   const handleSave = async () => {
+    if (isSaving) return;
+
     const trimmedTitle = editTitle.trim();
 
     if (!trimmedTitle) {
@@ -29,15 +34,21 @@ export const PlanTitle = ({
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       await onSave(trimmedTitle);
       setIsEditing(false);
-    } catch {
-      // 保存に失敗した場合は編集画面を閉じず、再試行できるようにする
+    } catch (error) {
+      console.error("旅行タイトルの保存に失敗しました:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
+    if (isSaving) return;
+
     setEditTitle(title);
     setIsEditing(false);
   };
@@ -51,15 +62,16 @@ export const PlanTitle = ({
             value={editTitle}
             onChange={(event) => setEditTitle(event.target.value)}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !saving) {
+              if (event.key === "Enter" && !isSaving) {
                 void handleSave();
               }
-              if (event.key === "Escape" && !saving) {
+
+              if (event.key === "Escape" && !isSaving) {
                 handleCancel();
               }
             }}
             autoFocus
-            disabled={saving}
+            disabled={isSaving}
             aria-label="旅行タイトル"
           />
 
@@ -67,7 +79,7 @@ export const PlanTitle = ({
             css={cancelButtonStyle}
             onClick={handleCancel}
             type="button"
-            disabled={saving}
+            disabled={isSaving}
           >
             キャンセル
           </button>
@@ -76,14 +88,15 @@ export const PlanTitle = ({
             css={saveButtonStyle}
             onClick={() => void handleSave()}
             type="button"
-            disabled={saving}
+            disabled={isSaving}
           >
-            {saving ? "保存中…" : "保存"}
+            {isSaving ? "保存中…" : "保存"}
           </button>
         </div>
       ) : (
         <div css={displayRowStyle}>
           <span css={titleTextStyle}>{title}</span>
+
           <button
             css={editButtonStyle}
             onClick={() => {
@@ -108,7 +121,7 @@ const titleAreaStyle = css`
   box-sizing: border-box;
 `;
 
-/* 入力欄・キャンセル・保存を横一列に配置 */
+/* 入力欄・キャンセル・保存 */
 const editRowStyle = css`
   display: flex;
   align-items: center;
@@ -163,7 +176,7 @@ const saveButtonStyle = css`
   white-space: nowrap;
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     opacity: 0.85;
   }
 
